@@ -78,7 +78,7 @@ docker-build:
 
 .PHONY:				docker-run
 docker-run:
-					docker run --rm -it $(NAME) /bin/bash
+					docker run --rm -it -v ./:/workspace -w /workspace $(NAME) /bin/bash
 
 ################
 #	EXECUTABLES
