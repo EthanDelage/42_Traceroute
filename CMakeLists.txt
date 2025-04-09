@@ -6,5 +6,10 @@ set(CMAKE_C_STANDARD 11)
 include_directories(include)
 
 add_executable(traceroute
+    include/options.h
     include/traceroute.h
-    src/main.c)
+    src/main.c
+    src/options.c
+    src/traceroute.c
+        src/socket.c
+        include/socket.h)

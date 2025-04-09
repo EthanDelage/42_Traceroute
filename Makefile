@@ -14,7 +14,10 @@ BUILD_DIR	=		.build/
 #	FILES
 #######################
 
-SRC			=		main.c
+SRC			=		main.c \
+					options.c \
+					socket.c \
+					traceroute.c
 
 
 OBJ			=		$(addprefix $(BUILD_DIR), $(SRC:.c=.o))
