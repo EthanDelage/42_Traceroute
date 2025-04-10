@@ -30,6 +30,13 @@ int init_udp_socket() {
     return sock_fd;
 }
 
+void set_sockopt_ttl(int sock_fd, int ttl) {
+    if (setsockopt(sock_fd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0) {
+        perror("setsockopt IP_TTL");
+        exit(EXIT_FAILURE);
+    }
+}
+
 void resolve_host(const char *host, traceroute_conf_t *conf) {
     struct addrinfo hints = {0};
     struct addrinfo *res;
