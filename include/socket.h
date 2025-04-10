@@ -3,6 +3,8 @@
 
 #include "traceroute.h"
 
+#define DEFAULT_RECV_TIMEOUT_SEC    5
+
 int init_icmp_socket();
 int init_udp_socket();
 void set_sockopt_ttl(int sock_fd, int ttl);
