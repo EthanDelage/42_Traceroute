@@ -47,7 +47,7 @@ void resolve_host(const char *host, traceroute_conf_t *conf) {
     status = getaddrinfo(host, NULL, &hints, &res);
     if (status != 0) {
         dprintf(STDERR_FILENO, "%s Name or service not known\n", conf->opt.host);
-        exit(0);
+        exit(2);
     }
     conf->sock_addr = *(struct sockaddr_in *)res->ai_addr;
     freeaddrinfo(res);

@@ -15,7 +15,7 @@ char *create_udp_packet(traceroute_conf_t *conf) {
 
     buffer = malloc(udp_packet_len);
     if (buffer == NULL) {
-       exit(1);
+       exit(EXIT_FAILURE);
     }
     fill_udp_header((struct udphdr *) buffer, DEFAULT_PORT + conf->packet_send, data_len);
     data = buffer + sizeof(struct udphdr);

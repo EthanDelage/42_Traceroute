@@ -7,7 +7,7 @@
 void parse_opt(int argc, char **argv, traceroute_options_t *opt) {
     if (argc != 2) {
         dprintf(STDERR_FILENO, "Need 1 arguments");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     opt->host = argv[1];
 }

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "options.h"
 #include "traceroute.h"
 
@@ -6,5 +8,5 @@ int main(int argc, char **argv) {
     parse_opt(argc, argv, &conf.opt);
     init_traceroute_conf(&conf);
     run_traceroute(&conf);
-    return 0;
+    return EXIT_SUCCESS;
 }
