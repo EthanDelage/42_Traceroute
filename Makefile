@@ -17,7 +17,8 @@ BUILD_DIR	=		.build/
 SRC			=		main.c \
 					options.c \
 					socket.c \
-					traceroute.c
+					traceroute.c \
+					udp.c
 
 
 OBJ			=		$(addprefix $(BUILD_DIR), $(SRC:.c=.o))
