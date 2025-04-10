@@ -1,6 +1,8 @@
 #include "udp.h"
 
+#include <errno.h>
 #include <netinet/ip.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <netinet/udp.h>
 
@@ -15,7 +17,8 @@ char *create_udp_packet(traceroute_conf_t *conf) {
 
     buffer = malloc(udp_packet_len);
     if (buffer == NULL) {
-       exit(EXIT_FAILURE);
+        perror("malloc");
+        exit(errno);
     }
     fill_udp_header((struct udphdr *) buffer, DEFAULT_PORT + conf->packet_send, data_len);
     data = buffer + sizeof(struct udphdr);
