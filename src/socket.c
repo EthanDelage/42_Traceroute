@@ -60,6 +60,6 @@ void resolve_host(const char *host, traceroute_conf_t *conf) {
         dprintf(STDERR_FILENO, "%s Name or service not known\n", conf->opt.host);
         exit(2);
     }
-    conf->sock_addr = *(struct sockaddr_in *)res->ai_addr;
+    conf->send_packet.sock_addr = *(struct sockaddr_in *)res->ai_addr;
     freeaddrinfo(res);
 }

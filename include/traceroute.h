@@ -18,12 +18,12 @@ typedef struct traceroute_recv_packet_s {
 typedef struct traceroute_send_packet_s {
     char *buffer;
     size_t buffer_size;
+    struct sockaddr_in sock_addr;
 } traceroute_send_packet_t;
 
 typedef struct traceroute_conf_s {
     int snd_sock_fd;
     int rcv_sock_fd;
-    struct sockaddr_in sock_addr;
 
     traceroute_options_t opt;
     size_t packet_send;

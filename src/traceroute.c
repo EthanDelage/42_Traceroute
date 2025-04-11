@@ -1,3 +1,4 @@
+#include "print.h"
 #include "traceroute.h"
 #include "socket.h"
 #include "udp.h"
@@ -19,7 +20,7 @@ void init_traceroute_conf(traceroute_conf_t *conf) {
     const size_t udp_packet_len = DEFAULT_PACKET_SIZE - sizeof(struct iphdr);
 
     resolve_host(conf->opt.host, conf);
-    printf("traceroute to %s (%s)\n", conf->opt.host, inet_ntoa(conf->sock_addr.sin_addr));
+    print_traceroute_info(conf->opt.host, &conf->send_packet.sock_addr);
     conf->rcv_sock_fd = init_icmp_socket();
     conf->snd_sock_fd = init_udp_socket();
     conf->send_packet.buffer_size = udp_packet_len;
@@ -66,12 +67,12 @@ void run_traceroute(traceroute_conf_t *conf) {
 static void execute_hop(traceroute_conf_t *conf, int hop) {
     traceroute_recv_packet_t response;
 
-    printf("%d", hop);
+    print_hop(hop);
     for (int i = 0; i < DEFAULT_PROBES_PER_HOP; i++) {
         send_probe(conf);
         response = receive_response(conf);
         if (response.packet_size == -1) {
-            printf(" *");
+            print_response_timeout();
             fflush(stdout);
         } else {
             process_response(response);
@@ -86,7 +87,7 @@ static void send_probe(traceroute_conf_t *conf) {
     struct sockaddr_in dest;
     dest.sin_family = AF_INET;
     dest.sin_port = ((struct udphdr *)buffer)->uh_dport;
-    dest.sin_addr.s_addr = conf->sock_addr.sin_addr.s_addr;
+    dest.sin_addr.s_addr = conf->send_packet.sock_addr.sin_addr.s_addr;
 
     if (sendto(conf->snd_sock_fd, buffer, ntohs(((struct udphdr *)buffer)->uh_ulen), 0,
         (struct sockaddr *)&dest, sizeof(dest)) < 0) {
@@ -115,6 +116,6 @@ static void process_response(traceroute_recv_packet_t response) {
 
     icmp_hdr = (struct icmphdr *)(response.buffer + sizeof(struct iphdr));
     (void) icmp_hdr;
-    printf(" %s", inet_ntoa(response.sock_addr.sin_addr));
+    print_router(&response.sock_addr);
     fflush(stdout);
 }
