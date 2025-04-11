@@ -8,5 +8,6 @@ int main(int argc, char **argv) {
     parse_opt(argc, argv, &conf.opt);
     init_traceroute_conf(&conf);
     run_traceroute(&conf);
+    free_traceroute_conf(&conf);
     return EXIT_SUCCESS;
 }

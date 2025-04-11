@@ -7,18 +7,34 @@
 #include <netinet/udp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/errno.h>
 
 static void execute_hop(traceroute_conf_t *conf, int hop);
 static void send_probe(traceroute_conf_t *conf);
-static traceroute_response_t receive_response(traceroute_conf_t *conf);
-static void process_response(traceroute_response_t response);
+static traceroute_recv_packet_t receive_response(traceroute_conf_t *conf);
+static void process_response(traceroute_recv_packet_t response);
 
 void init_traceroute_conf(traceroute_conf_t *conf) {
+    const size_t udp_packet_len = DEFAULT_PACKET_SIZE - sizeof(struct iphdr);
+
     resolve_host(conf->opt.host, conf);
     printf("traceroute to %s (%s)\n", conf->opt.host, inet_ntoa(conf->sock_addr.sin_addr));
     conf->rcv_sock_fd = init_icmp_socket();
     conf->snd_sock_fd = init_udp_socket();
+    conf->send_packet.buffer_size = udp_packet_len;
+    conf->send_packet.buffer = malloc(udp_packet_len);
+    conf->recv_packet.buffer = malloc(MAX_ICMP_PACKET_SIZE);
+    if (conf->send_packet.buffer == NULL || conf->recv_packet.buffer == NULL) {
+        free_traceroute_conf(conf);
+        perror("malloc");
+        exit(errno);
+    }
+}
+
+void free_traceroute_conf(traceroute_conf_t *conf) {
+    free(conf->send_packet.buffer);
+    free(conf->recv_packet.buffer);
 }
 
 void run_traceroute(traceroute_conf_t *conf) {
@@ -48,7 +64,7 @@ void run_traceroute(traceroute_conf_t *conf) {
  *       received, it processes and prints the results for that hop.
  */
 static void execute_hop(traceroute_conf_t *conf, int hop) {
-    traceroute_response_t response;
+    traceroute_recv_packet_t response;
 
     printf("%d", hop);
     for (int i = 0; i < DEFAULT_PROBES_PER_HOP; i++) {
@@ -60,7 +76,6 @@ static void execute_hop(traceroute_conf_t *conf, int hop) {
         } else {
             process_response(response);
         }
-        free(response.buffer);
     }
     printf("\n");
 }
@@ -73,30 +88,29 @@ static void send_probe(traceroute_conf_t *conf) {
     dest.sin_port = ((struct udphdr *)buffer)->uh_dport;
     dest.sin_addr.s_addr = conf->sock_addr.sin_addr.s_addr;
 
-    sendto(conf->snd_sock_fd, buffer, ntohs(((struct udphdr *)buffer)->uh_ulen), 0,
-        (struct sockaddr *)&dest, sizeof(dest));
-    free(buffer);
+    if (sendto(conf->snd_sock_fd, buffer, ntohs(((struct udphdr *)buffer)->uh_ulen), 0,
+        (struct sockaddr *)&dest, sizeof(dest)) < 0) {
+        perror("sendto");
+        free_traceroute_conf(conf);
+        exit(errno);
+    }
     conf->packet_send++;
 }
 
-static traceroute_response_t receive_response(traceroute_conf_t *conf) {
-    traceroute_response_t response = {0};
+static traceroute_recv_packet_t receive_response(traceroute_conf_t *conf) {
+    traceroute_recv_packet_t response = {0};
     char *buffer;
     socklen_t len = sizeof(response.sock_addr);
     ssize_t ret;
 
-    buffer = malloc(MAX_ICMP_PACKET_SIZE);
-    if (buffer == NULL) {
-        perror("malloc");
-        exit(errno);
-    }
+    buffer = conf->recv_packet.buffer;
     ret = recvfrom(conf->rcv_sock_fd, buffer, sizeof(buffer), 0, (struct sockaddr *)&response.sock_addr, &len);
     response.buffer = buffer;
     response.packet_size = ret;
     return response;
 }
 
-static void process_response(traceroute_response_t response) {
+static void process_response(traceroute_recv_packet_t response) {
     struct icmphdr *icmp_hdr;
 
     icmp_hdr = (struct icmphdr *)(response.buffer + sizeof(struct iphdr));

@@ -15,13 +15,9 @@ char *create_udp_packet(traceroute_conf_t *conf) {
     const size_t udp_packet_len = DEFAULT_PACKET_SIZE - sizeof(struct iphdr);
     const size_t data_len = udp_packet_len - sizeof(struct udphdr);
 
-    buffer = malloc(udp_packet_len);
-    if (buffer == NULL) {
-        perror("malloc");
-        exit(errno);
-    }
-    fill_udp_header((struct udphdr *) buffer, DEFAULT_PORT + conf->packet_send, data_len);
+    buffer = conf->send_packet.buffer;
     data = buffer + sizeof(struct udphdr);
+    fill_udp_header((struct udphdr *) buffer, DEFAULT_PORT + conf->packet_send, data_len);
     fill_udp_data(data, data_len);
     return buffer;
 }
