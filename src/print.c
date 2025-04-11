@@ -1,3 +1,4 @@
+#include <netdb.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -17,7 +18,10 @@ void print_response_timeout() {
 }
 
 void print_router(struct sockaddr_in *sock_addr) {
-    printf(" %s", inet_ntoa(sock_addr->sin_addr));
+    char host[NI_MAXHOST];
+
+    getnameinfo((struct sockaddr *)sock_addr, sizeof(*sock_addr), host, NI_MAXHOST, NULL, 0, 0);
+    printf(" %s (%s)", host, inet_ntoa(sock_addr->sin_addr));
     fflush(stdout);
 }
 
