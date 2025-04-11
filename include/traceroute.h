@@ -14,6 +14,7 @@ typedef struct traceroute_recv_packet_s {
     char *buffer;
     ssize_t packet_size;
     struct sockaddr_in sock_addr;
+    struct sockaddr_in *prev_sock_addr;
     struct timeval tv;
 } traceroute_recv_packet_t;
 

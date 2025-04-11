@@ -15,6 +15,7 @@ static void execute_hop(traceroute_conf_t *conf, int hop);
 static void send_probe(traceroute_conf_t *conf);
 static void receive_response(traceroute_conf_t *conf);
 static void process_response(traceroute_conf_t *conf);
+static void add_prev_sock_addr(struct sockaddr_in new, struct sockaddr_in *prev_sock_addr);
 
 void init_traceroute_conf(traceroute_conf_t *conf) {
     const size_t udp_packet_len = DEFAULT_PACKET_SIZE - sizeof(struct iphdr);
@@ -26,7 +27,8 @@ void init_traceroute_conf(traceroute_conf_t *conf) {
     conf->send_packet.buffer_size = udp_packet_len;
     conf->send_packet.buffer = malloc(udp_packet_len);
     conf->recv_packet.buffer = malloc(MAX_ICMP_PACKET_SIZE);
-    if (conf->send_packet.buffer == NULL || conf->recv_packet.buffer == NULL) {
+    conf->recv_packet.prev_sock_addr = malloc(DEFAULT_PROBES_PER_HOP * sizeof(struct sockaddr_in));
+    if (conf->send_packet.buffer == NULL || conf->recv_packet.buffer == NULL || conf->recv_packet.prev_sock_addr == NULL) {
         free_traceroute_conf(conf);
         perror("malloc");
         exit(errno);
@@ -36,6 +38,7 @@ void init_traceroute_conf(traceroute_conf_t *conf) {
 void free_traceroute_conf(traceroute_conf_t *conf) {
     free(conf->send_packet.buffer);
     free(conf->recv_packet.buffer);
+    free(conf->recv_packet.prev_sock_addr);
 }
 
 void run_traceroute(traceroute_conf_t *conf) {
@@ -68,6 +71,7 @@ void run_traceroute(traceroute_conf_t *conf) {
  *       received, it processes and prints the results for that hop.
  */
 static void execute_hop(traceroute_conf_t *conf, int hop) {
+    bzero(conf->recv_packet.prev_sock_addr, DEFAULT_PROBES_PER_HOP * sizeof(struct sockaddr_in));
     print_hop(hop);
     for (int i = 0; i < DEFAULT_PROBES_PER_HOP; i++) {
         send_probe(conf);
@@ -111,9 +115,27 @@ static void receive_response(traceroute_conf_t *conf) {
 
 static void process_response(traceroute_conf_t *conf) {
     struct icmphdr *icmp_hdr;
+    int print = 1;
 
     icmp_hdr = (struct icmphdr *)(conf->recv_packet.buffer + sizeof(struct iphdr));
     (void) icmp_hdr;
-    print_router(&conf->recv_packet.sock_addr);
+    for (int i = 0; i < DEFAULT_PROBES_PER_HOP; i++) {
+        if (memcmp(&conf->recv_packet.sock_addr, &conf->recv_packet.prev_sock_addr[i], sizeof(struct sockaddr_in)) == 0) {
+            print = 0;
+        }
+    }
+    if (print != 0) {
+        print_router(&conf->recv_packet.sock_addr);
+    }
     print_trip_time(conf->send_packet.tv, conf->recv_packet.tv);
+    add_prev_sock_addr(conf->recv_packet.sock_addr, conf->recv_packet.prev_sock_addr);
+}
+
+static void add_prev_sock_addr(struct sockaddr_in new, struct sockaddr_in *prev_sock_addr) {
+    struct sockaddr_in zero_addr = {0};
+
+    while (memcmp(prev_sock_addr, &zero_addr, sizeof(struct sockaddr_in)) != 0) {
+        prev_sock_addr = &prev_sock_addr[1];
+    }
+    memcpy(prev_sock_addr, &new, sizeof(struct sockaddr_in));
 }
