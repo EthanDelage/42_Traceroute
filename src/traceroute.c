@@ -46,6 +46,9 @@ void run_traceroute(traceroute_conf_t *conf) {
         set_sockopt_ttl(conf->snd_sock_fd, hop);
         execute_hop(conf, hop);
         hop++;
+        if (memcmp(&conf->send_packet.sock_addr, &conf->recv_packet.sock_addr, sizeof(conf->send_packet.sock_addr)) == 0) {
+            stop = 1;
+        }
     }
 }
 
