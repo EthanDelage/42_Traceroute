@@ -87,6 +87,7 @@ static void send_probe(traceroute_conf_t *conf) {
     dest.sin_port = ((struct udphdr *)buffer)->uh_dport;
     dest.sin_addr.s_addr = conf->send_packet.sock_addr.sin_addr.s_addr;
 
+    gettimeofday(&conf->send_packet.tv, NULL);
     if (sendto(conf->snd_sock_fd, buffer, ntohs(((struct udphdr *)buffer)->uh_ulen), 0,
         (struct sockaddr *)&dest, sizeof(dest)) < 0) {
         perror("sendto");
@@ -101,6 +102,7 @@ static void receive_response(traceroute_conf_t *conf) {
     ssize_t ret;
 
     ret = recvfrom(conf->rcv_sock_fd, conf->recv_packet.buffer, MAX_ICMP_PACKET_SIZE, 0, (struct sockaddr *)&conf->recv_packet.sock_addr, &len);
+    gettimeofday(&conf->recv_packet.tv, NULL);
     conf->recv_packet.packet_size = ret;
 }
 
@@ -110,4 +112,5 @@ static void process_response(traceroute_conf_t *conf) {
     icmp_hdr = (struct icmphdr *)(conf->recv_packet.buffer + sizeof(struct iphdr));
     (void) icmp_hdr;
     print_router(&conf->recv_packet.sock_addr);
+    print_trip_time(conf->send_packet.tv, conf->recv_packet.tv);
 }

@@ -2,6 +2,7 @@
 #define TRACEROUTE_H
 
 #include <netinet/in.h>
+#include <sys/time.h>
 
 #include "options.h"
 
@@ -13,12 +14,14 @@ typedef struct traceroute_recv_packet_s {
     char *buffer;
     ssize_t packet_size;
     struct sockaddr_in sock_addr;
+    struct timeval tv;
 } traceroute_recv_packet_t;
 
 typedef struct traceroute_send_packet_s {
     char *buffer;
     size_t buffer_size;
     struct sockaddr_in sock_addr;
+    struct timeval tv;
 } traceroute_send_packet_t;
 
 typedef struct traceroute_conf_s {
