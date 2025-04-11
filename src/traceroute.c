@@ -13,8 +13,8 @@
 
 static void execute_hop(traceroute_conf_t *conf, int hop);
 static void send_probe(traceroute_conf_t *conf);
-static traceroute_recv_packet_t receive_response(traceroute_conf_t *conf);
-static void process_response(traceroute_recv_packet_t response);
+static void receive_response(traceroute_conf_t *conf);
+static void process_response(traceroute_conf_t *conf);
 
 void init_traceroute_conf(traceroute_conf_t *conf) {
     const size_t udp_packet_len = DEFAULT_PACKET_SIZE - sizeof(struct iphdr);
@@ -65,17 +65,15 @@ void run_traceroute(traceroute_conf_t *conf) {
  *       received, it processes and prints the results for that hop.
  */
 static void execute_hop(traceroute_conf_t *conf, int hop) {
-    traceroute_recv_packet_t response;
-
     print_hop(hop);
     for (int i = 0; i < DEFAULT_PROBES_PER_HOP; i++) {
         send_probe(conf);
-        response = receive_response(conf);
-        if (response.packet_size == -1) {
+        receive_response(conf);
+        if (conf->recv_packet.packet_size == -1) {
             print_response_timeout();
             fflush(stdout);
         } else {
-            process_response(response);
+            process_response(conf);
         }
     }
     printf("\n");
@@ -98,24 +96,18 @@ static void send_probe(traceroute_conf_t *conf) {
     conf->packet_send++;
 }
 
-static traceroute_recv_packet_t receive_response(traceroute_conf_t *conf) {
-    traceroute_recv_packet_t response = {0};
-    char *buffer;
-    socklen_t len = sizeof(response.sock_addr);
+static void receive_response(traceroute_conf_t *conf) {
+    socklen_t len = sizeof(conf->recv_packet.sock_addr);
     ssize_t ret;
 
-    buffer = conf->recv_packet.buffer;
-    ret = recvfrom(conf->rcv_sock_fd, buffer, sizeof(buffer), 0, (struct sockaddr *)&response.sock_addr, &len);
-    response.buffer = buffer;
-    response.packet_size = ret;
-    return response;
+    ret = recvfrom(conf->rcv_sock_fd, conf->recv_packet.buffer, MAX_ICMP_PACKET_SIZE, 0, (struct sockaddr *)&conf->recv_packet.sock_addr, &len);
+    conf->recv_packet.packet_size = ret;
 }
 
-static void process_response(traceroute_recv_packet_t response) {
+static void process_response(traceroute_conf_t *conf) {
     struct icmphdr *icmp_hdr;
 
-    icmp_hdr = (struct icmphdr *)(response.buffer + sizeof(struct iphdr));
+    icmp_hdr = (struct icmphdr *)(conf->recv_packet.buffer + sizeof(struct iphdr));
     (void) icmp_hdr;
-    print_router(&response.sock_addr);
-    fflush(stdout);
+    print_router(&conf->recv_packet.sock_addr);
 }
