@@ -12,6 +12,7 @@ const char *doc = "print the route packets trace to network host";
 static struct argp_option options[] = {
     {"max-hop", 'm', "max_ttl", 0, "Set the max number of hops (max TTL to be reached). Default is 30", 0},
     {"queries", 'q', "nqueries", 0, "Set the number of probes per each hop. Default is 3", 0},
+    {"first", 'f', "first_ttl", 0, "Start from the first_ttl hop (instead from 1)", 0},
     {0}
 };
 
@@ -22,6 +23,7 @@ void parse_opt(int argc, char **argv, traceroute_options_t *opt) {
 
     opt->max_hops = DEFAULT_MAX_HOPS;
     opt->probes_per_hop = DEFAULT_PROBES_PER_HOP;
+    opt->first_ttl = DEFAULT_FIRST_TTL;
     argp_parse(&argp, argc, argv, 0, NULL, opt);
 }
 
@@ -34,6 +36,9 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
             break;
         case 'q':
             opt->probes_per_hop = convert_arg_to_size_t(arg, 10, 0);
+            break;
+        case 'f':
+            opt->first_ttl = (int) convert_arg_to_size_t(arg, 30, 0);
             break;
         case ARGP_KEY_ARG:
             if (state->arg_num >= 1) {

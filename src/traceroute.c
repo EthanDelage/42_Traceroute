@@ -11,7 +11,7 @@
 #include <string.h>
 #include <sys/errno.h>
 
-static void execute_hop(traceroute_conf_t *conf, size_t hop);
+static void execute_hop(traceroute_conf_t *conf, size_t ttl);
 static void send_probe(traceroute_conf_t *conf);
 static void receive_response(traceroute_conf_t *conf);
 static void process_response(traceroute_conf_t *conf);
@@ -43,12 +43,14 @@ void free_traceroute_conf(traceroute_conf_t *conf) {
 
 void run_traceroute(traceroute_conf_t *conf) {
     int stop = 0;
-    size_t hop = 1;
+    size_t hop = 0;
+    int ttl = conf->opt.first_ttl;
 
-    while (!stop && hop < conf->opt.max_hops + 1) {
-        set_sockopt_ttl(conf->snd_sock_fd, hop);
-        execute_hop(conf, hop);
+    while (!stop && hop < conf->opt.max_hops) {
+        set_sockopt_ttl(conf->snd_sock_fd, ttl);
+        execute_hop(conf, ttl);
         hop++;
+        ttl++;
         if (memcmp(&conf->send_packet.sock_addr, &conf->recv_packet.sock_addr, sizeof(conf->send_packet.sock_addr)) == 0) {
             stop = 1;
         }
@@ -64,15 +66,15 @@ void run_traceroute(traceroute_conf_t *conf) {
  * by sending probes with incremented TTL values.
  *
  * @param conf Pointer to the traceroute configuration structure.
- * @param hop The current hop (TTL) for which probes are sent.
+ * @param ttl The current hop (TTL) for which probes are sent.
  * @return void
  * @note This function handles multiple probes (typically 3) for a given hop.
  *       If no response is received, it displays `* * *`. If a response is
  *       received, it processes and prints the results for that hop.
  */
-static void execute_hop(traceroute_conf_t *conf, size_t hop) {
+static void execute_hop(traceroute_conf_t *conf, size_t ttl) {
     bzero(conf->recv_packet.prev_sock_addr, conf->opt.probes_per_hop * sizeof(struct sockaddr_in));
-    print_hop(hop);
+    print_ttl(ttl);
     for (size_t i = 0; i < conf->opt.probes_per_hop ; i++) {
         send_probe(conf);
         receive_response(conf);
