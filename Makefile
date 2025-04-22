@@ -19,7 +19,8 @@ SRC			=		main.c \
 					socket.c \
 					traceroute.c \
 					udp.c \
-					print.c
+					print.c \
+					common.c
 
 
 OBJ			=		$(addprefix $(BUILD_DIR), $(SRC:.c=.o))

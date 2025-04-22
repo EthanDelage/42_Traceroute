@@ -6,8 +6,6 @@
 
 #include "options.h"
 
-#define DEFAULT_MAX_HOPS    30
-#define DEFAULT_PROBES_PER_HOP  3
 #define MAX_ICMP_PACKET_SIZE    1024
 
 typedef struct traceroute_recv_packet_s {

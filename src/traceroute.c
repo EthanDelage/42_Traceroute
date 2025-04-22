@@ -11,7 +11,7 @@
 #include <string.h>
 #include <sys/errno.h>
 
-static void execute_hop(traceroute_conf_t *conf, int hop);
+static void execute_hop(traceroute_conf_t *conf, size_t hop);
 static void send_probe(traceroute_conf_t *conf);
 static void receive_response(traceroute_conf_t *conf);
 static void process_response(traceroute_conf_t *conf);
@@ -27,7 +27,7 @@ void init_traceroute_conf(traceroute_conf_t *conf) {
     conf->send_packet.buffer_size = udp_packet_len;
     conf->send_packet.buffer = malloc(udp_packet_len);
     conf->recv_packet.buffer = malloc(MAX_ICMP_PACKET_SIZE);
-    conf->recv_packet.prev_sock_addr = malloc(DEFAULT_PROBES_PER_HOP * sizeof(struct sockaddr_in));
+    conf->recv_packet.prev_sock_addr = malloc(conf->opt.probes_per_hop * sizeof(struct sockaddr_in));
     if (conf->send_packet.buffer == NULL || conf->recv_packet.buffer == NULL || conf->recv_packet.prev_sock_addr == NULL) {
         free_traceroute_conf(conf);
         perror("malloc");
@@ -43,9 +43,9 @@ void free_traceroute_conf(traceroute_conf_t *conf) {
 
 void run_traceroute(traceroute_conf_t *conf) {
     int stop = 0;
-    int hop = 1;
+    size_t hop = 1;
 
-    while (!stop && hop < DEFAULT_MAX_HOPS + 1) {
+    while (!stop && hop < conf->opt.max_hops + 1) {
         set_sockopt_ttl(conf->snd_sock_fd, hop);
         execute_hop(conf, hop);
         hop++;
@@ -70,10 +70,10 @@ void run_traceroute(traceroute_conf_t *conf) {
  *       If no response is received, it displays `* * *`. If a response is
  *       received, it processes and prints the results for that hop.
  */
-static void execute_hop(traceroute_conf_t *conf, int hop) {
-    bzero(conf->recv_packet.prev_sock_addr, DEFAULT_PROBES_PER_HOP * sizeof(struct sockaddr_in));
+static void execute_hop(traceroute_conf_t *conf, size_t hop) {
+    bzero(conf->recv_packet.prev_sock_addr, conf->opt.probes_per_hop * sizeof(struct sockaddr_in));
     print_hop(hop);
-    for (int i = 0; i < DEFAULT_PROBES_PER_HOP; i++) {
+    for (size_t i = 0; i < conf->opt.probes_per_hop ; i++) {
         send_probe(conf);
         receive_response(conf);
         if (conf->recv_packet.packet_size == -1) {
@@ -119,7 +119,7 @@ static void process_response(traceroute_conf_t *conf) {
 
     icmp_hdr = (struct icmphdr *)(conf->recv_packet.buffer + sizeof(struct iphdr));
     (void) icmp_hdr;
-    for (int i = 0; i < DEFAULT_PROBES_PER_HOP; i++) {
+    for (size_t i = 0; i < conf->opt.probes_per_hop; i++) {
         if (memcmp(&conf->recv_packet.sock_addr, &conf->recv_packet.prev_sock_addr[i], sizeof(struct sockaddr_in)) == 0) {
             print = 0;
         }
