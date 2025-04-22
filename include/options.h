@@ -10,6 +10,9 @@
 #define DEFAULT_PROBES_PER_HOP  3
 #define DEFAULT_FIRST_TTL   1
 #define DEFAULT_PORT  33434
+#define DEFAULT_RECV_TIMEOUT_SEC    5
+#define MAX_RECV_TIMEOUT_SEC    60
+
 
 typedef struct traceroute_options_s {
     char *host;
@@ -18,6 +21,7 @@ typedef struct traceroute_options_s {
     size_t probes_per_hop;
     int first_ttl;
     uint16_t port;
+    struct timeval recv_timeout;
 } traceroute_options_t;
 
 void parse_opt(int argc, char **argv, traceroute_options_t *opt);

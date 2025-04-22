@@ -22,7 +22,7 @@ void init_traceroute_conf(traceroute_conf_t *conf) {
 
     resolve_host(conf->opt.host, conf);
     print_traceroute_info(conf);
-    conf->rcv_sock_fd = init_icmp_socket();
+    conf->rcv_sock_fd = init_icmp_socket(conf);
     conf->snd_sock_fd = init_udp_socket();
     conf->send_packet.buffer_size = udp_packet_len;
     conf->send_packet.buffer = malloc(udp_packet_len);

@@ -12,15 +12,14 @@
 
 void set_sockopt_timeout(int sock_fd, struct timeval timeout);
 
-int init_icmp_socket() {
+int init_icmp_socket(traceroute_conf_t *conf) {
     int sock_fd;
-    struct timeval timeout = {DEFAULT_RECV_TIMEOUT_SEC, 0};
 
     sock_fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sock_fd < 0) {
         err(errno, "icmp socket");
     }
-    set_sockopt_timeout(sock_fd, timeout);
+    set_sockopt_timeout(sock_fd, conf->opt.recv_timeout);
     return sock_fd;
 }
 
