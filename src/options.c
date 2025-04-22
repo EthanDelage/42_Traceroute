@@ -21,10 +21,14 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state);
 void parse_opt(int argc, char **argv, traceroute_options_t *opt) {
     struct argp argp = {options, argp_parser, args_doc, doc, 0, 0, 0};
 
+    opt->packet_len = DEFAULT_PACKET_LEN;
     opt->max_hops = DEFAULT_MAX_HOPS;
     opt->probes_per_hop = DEFAULT_PROBES_PER_HOP;
     opt->first_ttl = DEFAULT_FIRST_TTL;
     argp_parse(&argp, argc, argv, 0, NULL, opt);
+    if (opt->packet_len < PACKET_MIN_LEN) {
+        opt->packet_len = PACKET_MIN_LEN;
+    }
 }
 
 static error_t argp_parser(int key, char *arg, struct argp_state *state) {
@@ -41,10 +45,13 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
             opt->first_ttl = (int) convert_arg_to_size_t(arg, 30, 0);
             break;
         case ARGP_KEY_ARG:
-            if (state->arg_num >= 1) {
-                argp_error(state, "too many host operands");
+            if (state->arg_num == 0) {
+                opt->host = arg;
+            } else if (state->arg_num == 1) {
+                opt->packet_len = convert_arg_to_size_t(arg, 65000, 1);
+            } else {
+                argp_error(state, "too many args");
             }
-            opt->host = arg;
             break;
         case ARGP_KEY_NO_ARGS:
             argp_error(state, "missing host operand");

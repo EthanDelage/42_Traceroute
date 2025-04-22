@@ -12,7 +12,7 @@ static void fill_udp_data(char *data, size_t len);
 char *create_udp_packet(traceroute_conf_t *conf) {
     char *buffer;
     char *data;
-    const size_t udp_packet_len = DEFAULT_PACKET_SIZE - sizeof(struct iphdr);
+    const size_t udp_packet_len = conf->opt.packet_len - sizeof(struct iphdr);
     const size_t data_len = udp_packet_len - sizeof(struct udphdr);
 
     buffer = conf->send_packet.buffer;

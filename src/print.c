@@ -1,11 +1,12 @@
+#include "print.h"
+
 #include <netdb.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/time.h>
 #include <arpa/inet.h>
 
-void print_traceroute_info(char *host, struct sockaddr_in *addr) {
-    printf("traceroute to %s (%s)\n", host, inet_ntoa(addr->sin_addr));
+void print_traceroute_info(traceroute_conf_t *conf) {
+    printf("traceroute to %s (%s), %zu hops max, %zu byte packets\n", conf->opt.host, inet_ntoa(conf->send_packet.sock_addr.sin_addr), conf->opt.max_hops, conf->opt.packet_len);
 }
 
 void print_ttl(size_t ttl) {
