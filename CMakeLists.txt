@@ -14,4 +14,8 @@ add_executable(traceroute
     src/socket.c
     include/socket.h
     src/udp.c
-    include/udp.h)
+    include/udp.h
+    src/print.c
+    include/print.h
+    src/common.c
+    include/common.h)
