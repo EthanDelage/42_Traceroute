@@ -30,8 +30,8 @@ void parse_opt(int argc, char **argv, traceroute_options_t *opt) {
     opt->port = DEFAULT_PORT;
     opt->recv_timeout.tv_sec = DEFAULT_RECV_TIMEOUT_SEC;
     argp_parse(&argp, argc, argv, 0, NULL, opt);
-    if (opt->packet_len < PACKET_MIN_LEN) {
-        opt->packet_len = PACKET_MIN_LEN;
+    if (opt->packet_len < MIN_PACKET_LEN) {
+        opt->packet_len = MIN_PACKET_LEN;
     }
     if (opt->recv_timeout.tv_sec == 0 && opt->recv_timeout.tv_usec == 0) {
         opt->recv_timeout.tv_usec = 1;
@@ -46,16 +46,16 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
 
     switch (key) {
         case 'm':
-            opt->max_hops = convert_arg_to_size_t(arg, 255, 0);
+            opt->max_hops = convert_arg_to_size_t(arg, MAX_HOPS, 0);
             break;
         case 'q':
-            opt->probes_per_hop = convert_arg_to_size_t(arg, 10, 0);
+            opt->probes_per_hop = convert_arg_to_size_t(arg, MAX_PROBES_PER_HOP, 0);
             break;
         case 'f':
-            opt->first_ttl = (int) convert_arg_to_size_t(arg, 30, 0);
+            opt->first_ttl = (int) convert_arg_to_size_t(arg, MAX_FIRST_TTL, 0);
             break;
         case 'p':
-            opt->port = convert_arg_to_size_t(arg, 65535, 0);
+            opt->port = convert_arg_to_size_t(arg, MAX_PORT, 0);
             break;
         case 'w':
             opt->recv_timeout = convert_double_to_timeval(convert_arg_to_double(arg));
@@ -64,7 +64,7 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
             if (state->arg_num == 0) {
                 opt->host = arg;
             } else if (state->arg_num == 1) {
-                opt->packet_len = convert_arg_to_size_t(arg, 65000, 1);
+                opt->packet_len = convert_arg_to_size_t(arg, MAX_PACKET_LEN, 1);
             } else {
                 argp_error(state, "too many args");
             }
