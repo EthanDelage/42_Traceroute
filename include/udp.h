@@ -3,8 +3,6 @@
 
 #include "traceroute.h"
 
-#define DEFAULT_PORT  33434
-
 char *create_udp_packet(traceroute_conf_t *conf);
 
 #endif //UDP_H

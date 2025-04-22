@@ -3,10 +3,9 @@
 #include <errno.h>
 #include <netinet/ip.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <netinet/udp.h>
 
-static void fill_udp_header(struct udphdr *udphdr, u_short port, size_t data_len);
+static void fill_udp_header(struct udphdr *udphdr, uint16_t port, size_t data_len);
 static void fill_udp_data(char *data, size_t len);
 
 char *create_udp_packet(traceroute_conf_t *conf) {
@@ -17,12 +16,12 @@ char *create_udp_packet(traceroute_conf_t *conf) {
 
     buffer = conf->send_packet.buffer;
     data = buffer + sizeof(struct udphdr);
-    fill_udp_header((struct udphdr *) buffer, DEFAULT_PORT + conf->packet_send, data_len);
+    fill_udp_header((struct udphdr *) buffer, conf->opt.port + conf->packet_send, data_len);
     fill_udp_data(data, data_len);
     return buffer;
 }
 
-static void fill_udp_header(struct udphdr *udphdr, u_short port, size_t data_len) {
+static void fill_udp_header(struct udphdr *udphdr, uint16_t port, size_t data_len) {
     udphdr->uh_sport = htons(33434); // TODO: change src port
     udphdr->uh_dport = htons(port);
     udphdr->uh_ulen = htons(sizeof(struct udphdr) + data_len);
