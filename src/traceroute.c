@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
+#include <netinet/ip_icmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -119,6 +120,11 @@ static void process_response(traceroute_conf_t *conf) {
 
     icmp_hdr = (struct icmphdr *)(conf->recv_packet.buffer + sizeof(struct iphdr));
     (void) icmp_hdr;
+    if (icmp_hdr->type != ICMP_TIME_EXCEEDED && icmp_hdr->type != ICMP_DEST_UNREACH) {
+        print_response_timeout();
+        fflush(stdout);
+        return;
+    }
     for (size_t i = 0; i < conf->opt.probes_per_hop; i++) {
         if (memcmp(&conf->recv_packet.sock_addr, &conf->recv_packet.prev_sock_addr[i], sizeof(struct sockaddr_in)) == 0) {
             print = 0;
