@@ -10,7 +10,7 @@ void print_traceroute_info(traceroute_conf_t *conf) {
 }
 
 void print_ttl(size_t ttl) {
-    printf("%zu", ttl);
+    printf("%2zu", ttl);
 }
 
 void print_response_timeout() {
