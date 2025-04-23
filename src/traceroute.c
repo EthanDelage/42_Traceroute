@@ -12,10 +12,10 @@
 #include <string.h>
 #include <sys/errno.h>
 
-static void execute_hop(traceroute_conf_t *conf, size_t ttl);
+static int execute_hop(traceroute_conf_t *conf, size_t ttl);
 static void send_probe(traceroute_conf_t *conf);
 static void receive_response(traceroute_conf_t *conf);
-static void process_response(traceroute_conf_t *conf);
+static int process_response(traceroute_conf_t *conf);
 static void add_prev_sock_addr(struct sockaddr_in new, struct sockaddr_in *prev_sock_addr);
 
 void init_traceroute_conf(traceroute_conf_t *conf) {
@@ -48,11 +48,10 @@ void run_traceroute(traceroute_conf_t *conf) {
 
     while (!stop && ttl < conf->opt.max_hops + 1) {
         set_sockopt_ttl(conf->snd_sock_fd, ttl);
-        execute_hop(conf, ttl);
-        ttl++;
-        if (memcmp(&conf->send_packet.sock_addr, &conf->recv_packet.sock_addr, sizeof(conf->send_packet.sock_addr)) == 0) {
+        if (execute_hop(conf, ttl) == 1) {
             stop = 1;
         }
+        ttl++;
     }
 }
 
@@ -66,12 +65,14 @@ void run_traceroute(traceroute_conf_t *conf) {
  *
  * @param conf Pointer to the traceroute configuration structure.
  * @param ttl The current hop (TTL) for which probes are sent.
- * @return void
+ * @return int 1 if response type is ICMP_DEST_UNREACH, 0 otherwise
  * @note This function handles multiple probes (typically 3) for a given hop.
  *       If no response is received, it displays `* * *`. If a response is
  *       received, it processes and prints the results for that hop.
  */
-static void execute_hop(traceroute_conf_t *conf, size_t ttl) {
+static int execute_hop(traceroute_conf_t *conf, size_t ttl) {
+    int ret = 0;
+
     bzero(conf->recv_packet.prev_sock_addr, conf->opt.probes_per_hop * sizeof(struct sockaddr_in));
     print_ttl(ttl);
     for (size_t i = 0; i < conf->opt.probes_per_hop ; i++) {
@@ -80,11 +81,12 @@ static void execute_hop(traceroute_conf_t *conf, size_t ttl) {
         if (conf->recv_packet.packet_size == -1) {
             print_response_timeout();
             fflush(stdout);
-        } else {
-            process_response(conf);
+        } else if (process_response(conf) == 1) {
+            ret = 1;
         }
     }
     printf("\n");
+    return ret;
 }
 
 static void send_probe(traceroute_conf_t *conf) {
@@ -114,7 +116,7 @@ static void receive_response(traceroute_conf_t *conf) {
     conf->recv_packet.packet_size = ret;
 }
 
-static void process_response(traceroute_conf_t *conf) {
+static int process_response(traceroute_conf_t *conf) {
     struct icmphdr *icmp_hdr;
     int print = 1;
 
@@ -123,7 +125,7 @@ static void process_response(traceroute_conf_t *conf) {
     if (icmp_hdr->type != ICMP_TIME_EXCEEDED && icmp_hdr->type != ICMP_DEST_UNREACH) {
         print_response_timeout();
         fflush(stdout);
-        return;
+        return 0;
     }
     for (size_t i = 0; i < conf->opt.probes_per_hop; i++) {
         if (memcmp(&conf->recv_packet.sock_addr, &conf->recv_packet.prev_sock_addr[i], sizeof(struct sockaddr_in)) == 0) {
@@ -135,6 +137,7 @@ static void process_response(traceroute_conf_t *conf) {
     }
     print_trip_time(conf->send_packet.tv, conf->recv_packet.tv);
     add_prev_sock_addr(conf->recv_packet.sock_addr, conf->recv_packet.prev_sock_addr);
+    return icmp_hdr->type == ICMP_DEST_UNREACH;
 }
 
 static void add_prev_sock_addr(struct sockaddr_in new, struct sockaddr_in *prev_sock_addr) {
