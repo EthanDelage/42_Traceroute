@@ -43,13 +43,11 @@ void free_traceroute_conf(traceroute_conf_t *conf) {
 
 void run_traceroute(traceroute_conf_t *conf) {
     int stop = 0;
-    size_t hop = 0;
-    int ttl = conf->opt.first_ttl;
+    size_t ttl = conf->opt.first_ttl;
 
-    while (!stop && hop < conf->opt.max_hops) {
+    while (!stop && ttl < conf->opt.max_hops + 1) {
         set_sockopt_ttl(conf->snd_sock_fd, ttl);
         execute_hop(conf, ttl);
-        hop++;
         ttl++;
         if (memcmp(&conf->send_packet.sock_addr, &conf->recv_packet.sock_addr, sizeof(conf->send_packet.sock_addr)) == 0) {
             stop = 1;

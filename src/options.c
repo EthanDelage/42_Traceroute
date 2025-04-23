@@ -33,6 +33,10 @@ void parse_opt(int argc, char **argv, traceroute_options_t *opt) {
     if (opt->packet_len < MIN_PACKET_LEN) {
         opt->packet_len = MIN_PACKET_LEN;
     }
+    if (opt->first_ttl > opt->max_hops) {
+        dprintf(STDERR_FILENO, "first hop out of range\n");
+        exit(EXIT_FAILURE);
+    }
     if (opt->recv_timeout.tv_sec == 0 && opt->recv_timeout.tv_usec == 0) {
         opt->recv_timeout.tv_usec = 1;
     } else if (opt->recv_timeout.tv_sec >= 60) {
@@ -52,7 +56,7 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
             opt->probes_per_hop = convert_arg_to_size_t(arg, MAX_PROBES_PER_HOP, 0);
             break;
         case 'f':
-            opt->first_ttl = (int) convert_arg_to_size_t(arg, MAX_FIRST_TTL, 0);
+            opt->first_ttl = convert_arg_to_size_t(arg, MAX_HOPS, 0);
             break;
         case 'p':
             opt->port = convert_arg_to_size_t(arg, MAX_PORT, 0);

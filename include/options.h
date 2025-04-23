@@ -12,7 +12,6 @@
 #define DEFAULT_PROBES_PER_HOP  3
 #define MAX_PROBES_PER_HOP    10
 #define DEFAULT_FIRST_TTL   1
-#define MAX_FIRST_TTL   30
 #define DEFAULT_PORT  33434
 #define MAX_PORT      65535
 #define DEFAULT_RECV_TIMEOUT_SEC    5
@@ -24,7 +23,7 @@ typedef struct traceroute_options_s {
     size_t packet_len;
     size_t max_hops;
     size_t probes_per_hop;
-    int first_ttl;
+    size_t first_ttl;
     uint16_t port;
     struct timeval recv_timeout;
 } traceroute_options_t;
